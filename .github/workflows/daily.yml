@@ -32,7 +32,7 @@ jobs:
           AIRBRIDGE_API_TOKEN: ${{ secrets.AIRBRIDGE_API_TOKEN }}
         run: |
           TO=$(TZ=Asia/Seoul date -d 'yesterday' +%F)
-          FROM=$(TZ=Asia/Seoul date -d '14 days ago' +%F)
+          FROM=$(TZ=Asia/Seoul date -d '60 days ago' +%F)
           python generate.py --from "$FROM" --to "$TO"
           mkdir -p public && cp dashboard.html public/index.html
       - uses: actions/configure-pages@v5
