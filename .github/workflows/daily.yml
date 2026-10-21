@@ -1,43 +1,35 @@
-name: tmoneygo dashboard daily
+name: Build dashboard (private)
 
 on:
   schedule:
-    - cron: '0 23 * * *'
-  workflow_dispatch:
+    - cron: "17 23 * * *"   # 매일 오전 8:17 (KST)
+  workflow_dispatch:         # Actions 탭에서 수동 실행 가능
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  contents: read             # repo에 아무것도 쓰지 않음 (Pages 배포 없음)
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: deps
+          python-version: "3.11"
+
+      - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: generate
+
+      - name: Generate dashboard
         env:
           AIRBRIDGE_API_TOKEN: ${{ secrets.AIRBRIDGE_API_TOKEN }}
-        run: |
-          TO=$(TZ=Asia/Seoul date -d 'yesterday' +%F)
-          FROM=$(TZ=Asia/Seoul date -d '60 days ago' +%F)
-          python generate.py --from "$FROM" --to "$TO"
-          mkdir -p public && cp dashboard.html public/index.html
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+          TZ: Asia/Seoul
+        run: python generate.py --from "$(date -d '60 days ago' +%F)" --to "$(date -d 'yesterday' +%F)"
+
+      - name: Upload dashboard (로그인한 본인만 다운로드 가능)
+        uses: actions/upload-artifact@v4
         with:
-          path: ./public
-      - id: deploy
-        uses: actions/deploy-pages@v4
+          name: tmoneygo-dashboard-${{ github.run_number }}
+          path: dashboard.html
+          retention-days: 14
